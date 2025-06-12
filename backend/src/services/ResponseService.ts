@@ -8,6 +8,8 @@ export class ResponseService {
   async submitResponse(data: {
     formId: string;
     userId: string;
+    userName?: string;
+    userEmail?: string;
     answers: Array<{
       questionId: string;
       answerText?: string;
@@ -26,8 +28,8 @@ export class ResponseService {
     if (!user) {
       user = await User.create({
         id: data.userId,
-        name: 'Anonymous',
-        email: `user_${data.userId}@example.com`
+        name: data.userName || 'Anonymous',
+        email: data.userEmail || `user_${data.userId}@example.com`
       });
     }
 
@@ -36,7 +38,7 @@ export class ResponseService {
       formId: data.formId,
       userId: data.userId,
       status: ResponseStatus.COMPLETED,
-      submittedAt: new Date()
+      submitTime: new Date()
     });
 
     // 處理每個答案
@@ -45,7 +47,7 @@ export class ResponseService {
         responseId: response.id,
         questionId: answerData.questionId,
         answerText: answerData.answerText,
-        answerDate: answerData.answerDate
+        answerDate: answerData.answerDate ? new Date(answerData.answerDate) : undefined
       });
 
       // 如果是選擇題，儲存選項
@@ -144,7 +146,7 @@ export class ResponseService {
         responseId: response.id,
         questionId: answerData.questionId,
         answerText: answerData.answerText,
-        answerDate: answerData.answerDate
+        answerDate: answerData.answerDate ? new Date(answerData.answerDate) : undefined
       });
 
       // 如果是選擇題，儲存選項
@@ -160,7 +162,7 @@ export class ResponseService {
 
     // 更新提交時間
     await response.update({
-      submittedAt: new Date()
+      submitTime: new Date()
     });
 
     return this.getResponseById(id);

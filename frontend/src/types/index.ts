@@ -110,6 +110,8 @@ export interface SubmitAnswerData {
 export interface SubmitResponseData {
   formId: string;
   userId: string;
+  userName?: string;
+  userEmail?: string;
   answers: SubmitAnswerData[];
 }
 

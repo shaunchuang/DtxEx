@@ -5,6 +5,7 @@ const router = Router();
 const responseController = new ResponseController();
 
 // 填答路由
+router.get('/', responseController.getAll);
 router.post('/', responseController.submit);
 router.get('/:id', responseController.getById);
 router.get('/user/:userId', responseController.getByUser);

@@ -4,85 +4,81 @@ import { responseService } from '../services';
 import { QuestionType, ResponseStatus } from '../types';
 
 export class ResponseController {
+  // 取得所有填答記錄
+  async getAll(req: Request, res: Response) {
+    try {
+      const { page = 1, limit = 20 } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
+
+      const { count, rows } = await ResponseModel.findAndCountAll({
+        include: [
+          {
+            model: User,
+            as: 'user'
+          },
+          {
+            model: Questionnaire,
+            as: 'questionnaire'
+          },
+          {
+            model: Answer,
+            as: 'answers',
+            include: [
+              {
+                model: Question,
+                as: 'question'
+              }
+            ]
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: Number(limit),
+        offset: offset
+      });
+
+      res.json({
+        success: true,
+        data: {
+          responses: rows,
+          pagination: {
+            page: Number(page),
+            limit: Number(limit),
+            totalCount: count,
+            totalPages: Math.ceil(count / Number(limit)),
+            hasNextPage: offset + rows.length < count,
+            hasPrevPage: Number(page) > 1
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching all responses:', error);
+      res.status(500).json({
+        success: false,
+        message: '取得填答記錄失敗',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
   // 提交問卷回答
   async submit(req: Request, res: Response) {
     try {
       const { formId, userId, answers } = req.body;
 
-      // 檢查問卷是否存在
-      const questionnaire = await Questionnaire.findByPk(formId);
-      if (!questionnaire) {
-        return res.status(404).json({
+      // 基本驗證
+      if (!formId || !userId || !answers) {
+        return res.status(400).json({
           success: false,
-          message: '問卷不存在'
+          message: '缺少必要的提交資料'
         });
       }
 
-      // 檢查使用者是否存在
-      const user = await User.findByPk(userId);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: '使用者不存在'
-        });
-      }
-
-      // 檢查是否已有回答記錄
-      let response = await ResponseModel.findOne({
-        where: {
-          formId,
-          userId
-        }
+      // 使用 ResponseService 來處理提交 (它會自動創建使用者如果不存在)
+      const result = await responseService.submitResponse({
+        formId,
+        userId,
+        answers
       });
-
-      // 如果沒有則建立新的回答記錄
-      if (!response) {
-        response = await ResponseModel.create({
-          formId,
-          userId,
-          submitTime: new Date(),
-          status: ResponseStatus.SUBMITTED
-        });
-      } else {
-        // 更新現有記錄
-        await response.update({
-          lastUpdateTime: new Date(),
-          status: ResponseStatus.SUBMITTED
-        });
-
-        // 刪除舊的答案
-        await Answer.destroy({
-          where: {
-            responseId: response.id
-          }
-        });
-      }
-
-      // 儲存答案
-      for (const answerData of answers) {
-        const question = await Question.findByPk(answerData.questionId);
-        if (!question) continue;
-
-        const answer = await Answer.create({
-          responseId: response.id,
-          questionId: answerData.questionId,
-          answerText: answerData.answerText,
-          answerDate: answerData.answerDate
-        });
-
-        // 如果是選擇題，儲存選項
-        if (answerData.selectedOptions && answerData.selectedOptions.length > 0) {
-          for (const optionId of answerData.selectedOptions) {
-            await AnswerOption.create({
-              answerId: answer.id,
-              optionId
-            });
-          }
-        }
-      }
-
-      // 取得完整的回答資料
-      const result = await this.getResponseWithDetails(response.id);
 
       res.status(201).json({
         success: true,
@@ -104,7 +100,36 @@ export class ResponseController {
     try {
       const { id } = req.params;
       
-      const response = await this.getResponseWithDetails(id);
+      const response = await ResponseModel.findByPk(id, {
+        include: [
+          {
+            model: User,
+            as: 'user'
+          },
+          {
+            model: Questionnaire,
+            as: 'questionnaire'
+          },
+          {
+            model: Answer,
+            as: 'answers',
+            include: [
+              {
+                model: Question,
+                as: 'question'
+              },
+              {
+                model: AnswerOption,
+                as: 'selectedOptions',
+                include: [{
+                  model: QuestionOption,
+                  as: 'option'
+                }]
+              }
+            ]
+          }
+        ]
+      });
       
       if (!response) {
         return res.status(404).json({

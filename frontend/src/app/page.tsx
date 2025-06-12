@@ -36,6 +36,28 @@ export default function HomePage() {
         <p className="text-xl text-secondary-600 max-w-2xl mx-auto">
           歡迎使用動態醫療量表問卷系統，請選擇您要填寫的問卷
         </p>
+        
+        {/* 快速導航 */}
+        <div className="flex flex-wrap gap-3 justify-center pt-4">
+          <Link href="/questionnaires">
+            <Button size="sm" variant="outline">
+              <FileText className="h-4 w-4 mr-2" />
+              瀏覽所有問卷
+            </Button>
+          </Link>
+          <Link href="/my-responses">
+            <Button size="sm" variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              我的填答記錄
+            </Button>
+          </Link>
+          <Link href="/admin">
+            <Button size="sm" variant="outline">
+              <Clock className="h-4 w-4 mr-2" />
+              管理後台
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* 統計卡片 */}

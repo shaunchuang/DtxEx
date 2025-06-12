@@ -7,6 +7,7 @@ const questionnaireController = new QuestionnaireController();
 // 問卷路由
 router.get('/', questionnaireController.getAll);
 router.get('/:id', questionnaireController.getById);
+router.get('/:id/responses', questionnaireController.getResponses);
 router.post('/', questionnaireController.create);
 router.put('/:id', questionnaireController.update);
 router.delete('/:id', questionnaireController.delete);

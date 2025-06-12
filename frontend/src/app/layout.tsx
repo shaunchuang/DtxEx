@@ -29,7 +29,19 @@ export default function RootLayout({
                       href="/"
                       className="text-secondary-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                     >
+                      首頁
+                    </a>
+                    <a
+                      href="/questionnaires"
+                      className="text-secondary-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
                       問卷列表
+                    </a>
+                    <a
+                      href="/my-responses"
+                      className="text-secondary-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      我的記錄
                     </a>
                     <a
                       href="/admin"

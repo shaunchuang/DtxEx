@@ -41,4 +41,30 @@ export const questionnaireService = {
   async delete(id: string): Promise<void> {
     await apiClient.delete(`/questionnaires/${id}`);
   },
+
+  // 取得問卷的所有填答記錄
+  async getResponses(id: string, params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    questionnaire: {
+      id: string;
+      title: string;
+      description?: string;
+    };
+    responses: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalCount: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  }> {
+    const response = await apiClient.get(`/questionnaires/${id}/responses`, { 
+      params 
+    });
+    return response.data.data;
+  },
 };

@@ -3,6 +3,14 @@ import { responseService } from '@/services/responses';
 import { SubmitResponseData } from '@/types';
 import toast from 'react-hot-toast';
 
+export const useAllResponses = (params?: { page?: number; limit?: number }) => {
+  return useQuery({
+    queryKey: ['allResponses', params],
+    queryFn: () => responseService.getAll(params),
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+};
+
 export const useResponse = (id: string) => {
   return useQuery({
     queryKey: ['response', id],
@@ -16,7 +24,7 @@ export const useUserResponses = (userId: string) => {
   return useQuery({
     queryKey: ['userResponses', userId],
     queryFn: () => responseService.getByUser(userId),
-    enabled: !!userId,
+    enabled: false, // 預設不自動查詢，需要手動觸發
     staleTime: 1 * 60 * 1000,
   });
 };
