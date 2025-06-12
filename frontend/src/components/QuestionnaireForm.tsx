@@ -42,12 +42,14 @@ export const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    // 驗證使用者資訊
-    if (!userInfo.name.trim()) {
-      newErrors.name = '請輸入姓名';
-    }
-    if (!userInfo.email.trim()) {
-      newErrors.email = '請輸入電子郵件';
+    // 編輯模式下不需要驗證使用者資訊
+    if (!isEditing) {
+      if (!userInfo.name.trim()) {
+        newErrors.name = '請輸入姓名';
+      }
+      if (!userInfo.email.trim()) {
+        newErrors.email = '請輸入電子郵件';
+      }
     }
 
     // 驗證必填題目
@@ -102,7 +104,9 @@ export const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({
 
     const responseData = {
       formId: questionnaire.id,
-      userId: generateUserId(), // 實際應用中應該從認證系統取得
+      userId: generateUserId(),
+      userName: userInfo.name,
+      userEmail: userInfo.email,
       answers: submitData
     };
 
@@ -119,31 +123,33 @@ export const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 使用者資訊 */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold">基本資料</h3>
-        </CardHeader>
-        <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="姓名"
-              value={userInfo.name}
-              onChange={(e) => setUserInfo(prev => ({ ...prev, name: e.target.value }))}
-              error={errors.name}
-              required
-            />
-            <Input
-              label="電子郵件"
-              type="email"
-              value={userInfo.email}
-              onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
-              error={errors.email}
-              required
-            />
-          </div>
-        </CardBody>
-      </Card>
+      {/* 使用者資訊 - 只在非編輯模式顯示 */}
+      {!isEditing && (
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold">基本資料</h3>
+          </CardHeader>
+          <CardBody>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="姓名"
+                value={userInfo.name}
+                onChange={(e) => setUserInfo(prev => ({ ...prev, name: e.target.value }))}
+                error={errors.name}
+                required
+              />
+              <Input
+                label="電子郵件"
+                type="email"
+                value={userInfo.email}
+                onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
+                error={errors.email}
+                required
+              />
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* 問卷內容 */}
       <Card>

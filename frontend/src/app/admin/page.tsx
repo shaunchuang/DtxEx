@@ -43,10 +43,12 @@ export default function AdminPage() {
           <h1 className="text-3xl font-bold text-secondary-900">問卷管理</h1>
           <p className="text-secondary-600 mt-2">建立和管理您的醫療量表問卷</p>
         </div>
-        <Button className="flex items-center space-x-2">
-          <Plus className="h-5 w-5" />
-          <span>建立新問卷</span>
-        </Button>
+        <Link href="/admin/create">
+          <Button className="flex items-center space-x-2">
+            <Plus className="h-5 w-5" />
+            <span>建立新問卷</span>
+          </Button>
+        </Link>
       </div>
 
       {/* 統計概覽 */}
@@ -92,10 +94,12 @@ export default function AdminPage() {
               <FileText className="h-16 w-16 text-secondary-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-secondary-900 mb-2">尚無問卷</h3>
               <p className="text-secondary-600 mb-4">建立您的第一份問卷來開始收集回答。</p>
-              <Button>
-                <Plus className="h-5 w-5 mr-2" />
-                建立新問卷
-              </Button>
+              <Link href="/admin/create">
+                <Button>
+                  <Plus className="h-5 w-5 mr-2" />
+                  建立新問卷
+                </Button>
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -136,16 +140,24 @@ export default function AdminPage() {
                       <td className="py-4 px-4">
                         <div className="flex items-center justify-center space-x-2">
                           <Link href={`/questionnaire/${questionnaire.id}`}>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" title="預覽問卷">
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <Link href={`/admin/responses/${questionnaire.id}`}>
+                            <Button variant="outline" size="sm" title="檢視填答記錄">
+                              <Users className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Link href={`/admin/edit/${questionnaire.id}`}>
+                            <Button variant="outline" size="sm" title="編輯問卷">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Button 
                             variant="outline" 
                             size="sm"
+                            title="刪除問卷"
                             onClick={() => handleDelete(questionnaire.id, questionnaire.title)}
                             disabled={deleteQuestionnaireMutation.isPending}
                           >

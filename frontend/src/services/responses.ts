@@ -2,6 +2,32 @@ import apiClient from './api';
 import { Response, SubmitResponseData, ApiResponse } from '@/types';
 
 export const responseService = {
+  // 取得所有填答記錄
+  async getAll(params?: { page?: number; limit?: number }): Promise<{
+    responses: Response[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalCount: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  }> {
+    const response = await apiClient.get<ApiResponse<{
+      responses: Response[];
+      pagination: {
+        page: number;
+        limit: number;
+        totalCount: number;
+        totalPages: number;
+        hasNextPage: boolean;
+        hasPrevPage: boolean;
+      };
+    }>>('/responses', { params });
+    return response.data.data || { responses: [], pagination: { page: 1, limit: 20, totalCount: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false } };
+  },
+
   // 提交問卷回答
   async submit(data: SubmitResponseData): Promise<Response> {
     const response = await apiClient.post<ApiResponse<Response>>('/responses', data);

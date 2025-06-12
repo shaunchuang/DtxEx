@@ -66,3 +66,15 @@ export const useDeleteQuestionnaire = () => {
     },
   });
 };
+
+export const useQuestionnaireResponses = (id: string, params?: {
+  page?: number;
+  limit?: number;
+}) => {
+  return useQuery({
+    queryKey: ['questionnaireResponses', id, params],
+    queryFn: () => questionnaireService.getResponses(id, params),
+    enabled: !!id,
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+};

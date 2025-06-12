@@ -54,66 +54,40 @@ export class QuestionnaireController {
     try {
       const { title, description, sections } = req.body;
 
-      const questionnaire = await Questionnaire.create({
-        title,
-        description
-      });
+      // 基本驗證
+      if (!title || title.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: '問卷標題為必填項目'
+        });
+      }
 
-      // 建立區段和題目
       if (sections && sections.length > 0) {
-        for (const sectionData of sections) {
-          const section = await Section.create({
-            formId: questionnaire.id,
-            title: sectionData.title,
-            description: sectionData.description,
-            order: sectionData.order
-          });
-
-          if (sectionData.questions && sectionData.questions.length > 0) {
-            for (const questionData of sectionData.questions) {
-              const question = await Question.create({
-                sectionId: section.id,
-                questionText: questionData.questionText,
-                questionType: questionData.questionType,
-                order: questionData.order,
-                isRequired: questionData.isRequired,
-                description: questionData.description
-              });
-
-              if (questionData.options && questionData.options.length > 0) {
-                for (const optionData of questionData.options) {
-                  await QuestionOption.create({
-                    questionId: question.id,
-                    optionText: optionData.optionText,
-                    optionValue: optionData.optionValue,
-                    order: optionData.order
-                  });
-                }
+        // 驗證區段和題目
+        for (const section of sections) {
+          if (section.questions && section.questions.length > 0) {
+            for (const question of section.questions) {
+              if (!question.questionText || question.questionText.trim().length === 0) {
+                return res.status(400).json({
+                  success: false,
+                  message: '題目內容不能為空'
+                });
+              }
+              if (!question.questionType) {
+                return res.status(400).json({
+                  success: false,
+                  message: '請選擇題目類型'
+                });
               }
             }
           }
         }
       }
 
-      // 重新取得完整資料
-      const result = await Questionnaire.findByPk(questionnaire.id, {
-        include: [{
-          model: Section,
-          as: 'sections',
-          include: [{
-            model: Question,
-            as: 'questions',
-            include: [{
-              model: QuestionOption,
-              as: 'options'
-            }]
-          }]
-        }],
-        order: [
-          ['sections', 'order', 'ASC'],
-          ['sections', 'questions', 'order', 'ASC'],
-          ['sections', 'questions', 'options', 'order', 'ASC']
-        ]
+      const result = await questionnaireService.createQuestionnaire({
+        title,
+        description,
+        sections: sections || []
       });
 
       res.status(201).json({
@@ -135,21 +109,47 @@ export class QuestionnaireController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { title, description } = req.body;
+      const { title, description, sections } = req.body;
 
-      const questionnaire = await Questionnaire.findByPk(id);
-      if (!questionnaire) {
-        return res.status(404).json({
+      // 基本驗證
+      if (title !== undefined && (!title || title.trim().length === 0)) {
+        return res.status(400).json({
           success: false,
-          message: '問卷不存在'
+          message: '問卷標題不能為空'
         });
       }
 
-      await questionnaire.update({ title, description });
+      if (sections && sections.length > 0) {
+        // 驗證區段和題目
+        for (const section of sections) {
+          if (section.questions && section.questions.length > 0) {
+            for (const question of section.questions) {
+              if (!question.questionText || question.questionText.trim().length === 0) {
+                return res.status(400).json({
+                  success: false,
+                  message: '題目內容不能為空'
+                });
+              }
+              if (!question.questionType) {
+                return res.status(400).json({
+                  success: false,
+                  message: '請選擇題目類型'
+                });
+              }
+            }
+          }
+        }
+      }
+
+      const result = await questionnaireService.updateQuestionnaire(id, {
+        title,
+        description,
+        sections
+      });
 
       res.json({
         success: true,
-        data: questionnaire,
+        data: result,
         message: '問卷更新成功'
       });
     } catch (error) {
@@ -186,6 +186,60 @@ export class QuestionnaireController {
       res.status(500).json({
         success: false,
         message: '刪除問卷失敗',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  // 取得問卷的所有填答記錄
+  async getResponses(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      // 檢查問卷是否存在
+      const questionnaire = await Questionnaire.findByPk(id);
+      if (!questionnaire) {
+        return res.status(404).json({
+          success: false,
+          message: '問卷不存在'
+        });
+      }
+
+      // 取得填答記錄
+      const { rows: responses, count: totalCount } = await questionnaireService.getQuestionnaireResponses(id, {
+        limit,
+        offset
+      });
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      res.json({
+        success: true,
+        data: {
+          questionnaire: {
+            id: questionnaire.id,
+            title: questionnaire.title,
+            description: questionnaire.description
+          },
+          responses,
+          pagination: {
+            page,
+            limit,
+            totalCount,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching questionnaire responses:', error);
+      res.status(500).json({
+        success: false,
+        message: '取得問卷填答記錄失敗',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
